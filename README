@@ -1,0 +1,131 @@
+Redrain 0.3.1
+http://redrain-project.googlecode.com
+2010-JUL-03
+Copyright (c) 2009,2010 Chris Martello
+
+Redrain is a fairly simple console-based podcast downloader written in
+python.  After configuration, it operates without any interaction from the
+user, making it well-suited for automated tasks.
+
+DEPENDENCIES
+	Python 2.6 (http://www.python.org)
+	Feedparser 4.1 (http://feedparser.org)
+
+SETUP
+	At present, there is no setup script nor any means to add the program
+to your system globally as the state of the program is "barely even alpha."
+Right now, it's best to simply unzip+untar the files to their own
+directory and type "python redrain-console.py" from inside the directory.
+	The first time that you run Redrain, it will create a configuration
+directory (~/.redrain) and populate it with empty files and then ask you
+for a list of podcast feed urls.  You should be able to acquire these from
+the site providing the show in most browsers.
+
+USAGE
+	Typical invocation of Redrain is simply done by typing:
+
+	./redrain-console.py [options]
+
+	on your command line, if you're on any *nix.  Windows users will have to
+	type:
+
+	python redrain-console.py [options]
+
+	If your system has multiple versions of Python installed, you may need
+	to specify and use python2.6 instead.
+	
+	All options that would be specified in the config file may be specified
+	on the command line. In addition, you may specify an alternate config
+	file by adding "config=filename" to the command line.  This is useful
+	if you want to keep your video and audio podcasts in different places.
+
+	Note that options specified on the command line override config file
+	options for that execution.
+
+	One configuration item is typically found on the command line, and that
+	is the "skipdl" option.  Providing "skipdl=true" will cause Redrain
+	to only pretend to download files.  Useful the first time that you've
+	run the program or for testing.
+
+FILES
+	Here's a list of the configuration files and what they do.
+
+	~/.redrain/config - Flat text file containing a list of key/value pairs
+	that is loaded when the program starts.  For the most part, these
+	simply reference other files that are loaded when the program starts.
+	The reasoning behind this is so that multiple configurations can be
+	used and selected at run time in the future.  Configuration file 
+	keys are below (note that these may also be specified on the command
+	line) :
+
+	- f_oldshows -- the location of the 'oldshows' file.
+
+	- f_podcasts -- the location of the 'podcasts' file.
+
+	- f_lastrun -- the location of the 'lastrun' file.
+
+	- d_download_dir -- where you want podcasts to be downloaded.  Some
+	preliminary effort has been made to make sure that your choice of 
+	directory is correct for your operating system, but be sure to test
+	these things before you rely on it :)  Also, the program *usually*
+	appends a slash to the end of this entry to make sure that the files
+	are actually going into the chosen directory; this task is not fully
+	complete yet.
+
+	- r_oldshows -- A url where a remote copy of the 'oldshows' file can be
+	found.  Very useful if you only occasionally use a laptop to download your
+	podcasts, since the oldshows file on your laptop will be out of date by
+	comparison.  Note that this feature is only a stopgap solution; you can't
+	push oldshows up, so your home machine will be out of date.  A future
+	version of this feature will be even better.
+
+	~/.redrain/podcasts - Flat text file, formatted similarly to 'config'.
+	Stores a list of key/value pairs the describe given podcasts.  
+	There are currently four supported keys, listed below:
+	
+	- feedurl -- This is the actual URL of the podcast feed, and this is
+	the only mandatory key.  Entries without this key will simply be
+	ignored.  Note that this is for the actual RSS feed, not the website
+	itself.
+
+	- nicename -- This is the name of the show that is displayed on screen.
+	While this is usually generated on its own during configuration, it is
+	often the case that you'll want to rewrite this for your own purposes.
+
+	- skip -- If this key is present and the value is 'true', the show will be
+	skipped on this run.  Useful if there's a show that you don't want to 
+	download for a while and would rather not comment out several lines in your
+	podcasts file.
+
+	- dl_file_name -- This is for customizing downloaded file names.  Some
+	shows have frankly bizarre conventions for their titles (which is what
+	is used as the default file name) and this key provides a work-around
+	for that.  The key describes the filename convention that you would
+	like Redrain to use.  An examples :
+
+	dl_file_name=The Onion Radio News - %{title}
+
+	(this could also be written as %{nicename} - %{title} )
+
+	In short, each occurrence of %{something} is replaced with special
+	local values as each file is downloaded, and the extension for the file
+	is pulled from the url and appended to the custom filename.  Valid 
+	fields are as follows :
+
+	date - date the show was updated
+	time - time the show was updated
+	title - posted title for the episode
+	guid - GUID for the episode
+	showname - show name generated from feed
+	nicename - user-provided "nice" name (described above)
+	ltime - local time you downloaded the show
+	ldate - local date you downloaded the show
+
+	~/.redrain/oldshows - Flat text file containing data used in 
+	identifying shows that have already been downloaded.  Each line starts
+	with either "guid=" or "url=", indicating that kind of entry it is.  
+	The remainder of the line is the relevant data.
+
+	~/.redrain/lastrun - A flat text file that shows the last time that the
+	program was run.  Simply five lines, one each for year, month, day, 
+	hour, and minute.  The date tracked is always in GMT.
