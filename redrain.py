@@ -277,8 +277,10 @@ def scrape_feed_url(url, nicename='NoneProvided'):
             # store the date and time tuple so that showlist.append() is
             # less ugly.
             d = f['entries'][z]['updated_parsed']
+            if f['entries'][z]['enclosures'][0].get('href', '') == '':
+                continue
             showlist.append( \
-                {'url': f['entries'][z]['enclosures'][0]['href'], \
+                {'url': f['entries'][z]['enclosures'][0].get('href',''), \
                 'title': f['entries'][z]['title'], \
                 'guid': f['entries'][z]['id'], \
                 'date': datetime(d[0], d[1], d[2], d[3], d[4]), \
@@ -495,7 +497,7 @@ def custom_name(podcast, fstring):
     fstring = sanitize_filename(fstring)
 
     # add in the extension
-    fstring = fstring + replacements['ext']
+    #fstring = fstring + replacements['ext']
 
     # we're done, return the string
     return fstring
