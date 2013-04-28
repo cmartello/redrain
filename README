@@ -1,7 +1,7 @@
-Redrain 0.3.2
+Redrain 0.4.0
 http://redrain-project.googlecode.com
-2012-OCT-18
-Copyright (c) 2009,2010 Chris Martello
+2013-APR-28
+Copyright (c) 2009-2013 Chris Martello
 
 Redrain is a fairly simple console-based podcast downloader written in
 python.  After configuration, it operates without any interaction from the
@@ -9,7 +9,8 @@ user, making it well-suited for automated tasks.
 
 DEPENDENCIES
 	Python 2.6 (http://www.python.org)
-	Feedparser 4.1 (http://feedparser.org)
+	Feedparser 5 (http://feedparser.org)
+        - BeautifulSoup (helps Feedparser)
 
 SETUP
 	At present, there is no setup script nor any means to add the program

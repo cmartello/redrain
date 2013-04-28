@@ -1,0 +1,6 @@
+*.swp
+*~
+*.pyc
+attic/*
+feedparser5.py
+testcache/*
