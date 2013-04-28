@@ -6,7 +6,7 @@ import string
 import time
 import re
 import os
-from feedparser import parse
+from feedparser5 import parse
 from re import search, match
 from datetime import datetime
 from urllib import urlretrieve, urlopen
@@ -25,7 +25,7 @@ default_config = { \
                     'd_download_dir': '~/.redrain/download/', \
                     'f_lastrun': '~/.redrain/lastrun'}
 
-lastrun = datetime(2010, 7, 3, 0, 0)
+lastrun = datetime(2013, 4, 28, 0, 0)
 
 
 def load_config(cfg_name='~/.redrain/config'):
@@ -259,8 +259,8 @@ def scrape_feed_url(url, nicename='NoneProvided'):
 
     Uses feedparser to examine a given feed and take the relevant bits of the
     'entries' array and turn it into a list of dictionaries that is
-    returned to the end user.  Five keys are in each 'episode' :
-    'url', 'title', 'guid', and 'date'.
+    returned to the end user.  Six keys are in each 'episode' :
+    'url', 'title', 'guid', 'date', 'showname', and 'nicename'.
     """
     showlist = []
     f = parse(url)
@@ -269,26 +269,37 @@ def scrape_feed_url(url, nicename='NoneProvided'):
     if f.bozo == 1:
         print '[error]',
 
-    # look through each entry in the feed
-    for z in range(0, len(f['entries'])):
-        # Some feeds have entries that do not contain enclosures, skip 'em.
-        # is there a better way to handle this?
-        if 'enclosures' in f['entries'][z]:
-            # store the date and time tuple so that showlist.append() is
-            # less ugly.
-            d = f['entries'][z]['updated_parsed']
-            if f['entries'][z]['enclosures'][0].get('href', '') == '':
-                continue
-            showlist.append( \
-                {'url': f['entries'][z]['enclosures'][0].get('href',''), \
-                'title': f['entries'][z]['title'], \
-                'guid': f['entries'][z]['id'], \
-                'date': datetime(d[0], d[1], d[2], d[3], d[4]), \
-                'showname': f.feed.title, \
-                'nicename': nicename})
+    # iterate over the entries within the feed
+    for entry in f.entries:
+        tmp = dict()
+        tmp['title'] = entry.title
+        tmp['guid'] = entry.guid
+        tmp['showname'] = f.feed.title
+        tmp['nicename'] = nicename
+
+        # prep updated_parsed for conversion datetime object
+        d = list()
+        for idx in xrange(5):
+            d.append(entry.published_parsed[idx])
+
+        tmp['date'] = datetime(d[0], d[1], d[2], d[3], d[4])
+
+        # within each entry is a list of enclosures (hopefully of length 1)
+        for enclosure in entry.enclosures:
+            tmp['url'] = enclosure['href']
+
+        # temp hack, but this fixes enclosures that lack certain attributes.
+        if valid_item(tmp) == True:
+            showlist.append(tmp)
 
     return showlist
 
+def valid_item(item):
+    """Debug function: test to see if an item is up to spec."""
+    for x in ['title', 'guid', 'showname', 'nicename', 'date', 'url']:
+        if item.get(x, 'FAIL') == 'FAIL':
+            return False
+    return True
 
 def filter_list(item):
     """Determines if a given episode is new enough to be downloaded.
