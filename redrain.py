@@ -6,7 +6,7 @@ import string
 import time
 import re
 import os
-from feedparser5 import parse
+from feedparser import parse
 from re import search, match
 from datetime import datetime
 from urllib import urlretrieve, urlopen
@@ -25,7 +25,7 @@ default_config = { \
                     'd_download_dir': '~/.redrain/download/', \
                     'f_lastrun': '~/.redrain/lastrun'}
 
-lastrun = datetime(2013, 4, 28, 0, 0)
+lastrun = datetime(2013, 4, 30, 0, 0)
 
 
 def load_config(cfg_name='~/.redrain/config'):
@@ -278,9 +278,7 @@ def scrape_feed_url(url, nicename='NoneProvided'):
         tmp['nicename'] = nicename
 
         # prep updated_parsed for conversion datetime object
-        d = list()
-        for idx in xrange(5):
-            d.append(entry.published_parsed[idx])
+        d = list(entry.published_parsed[0:5])
 
         tmp['date'] = datetime(d[0], d[1], d[2], d[3], d[4])
 
@@ -359,10 +357,9 @@ def save_state():
     f.close()
 
     # save datetime
-    t = time.gmtime()
     f = open(config['f_lastrun'], 'w')
-    for k in range(5):
-        f.write(str(t[k]) + '\n')
+    for k in time.gmtime()[0:5]:
+        f.write(str(k) + '\n')
 
     f.flush()
     f.close()
