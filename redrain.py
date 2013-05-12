@@ -25,7 +25,7 @@ default_config = { \
                     'd_download_dir': '~/.redrain/download/', \
                     'f_lastrun': '~/.redrain/lastrun'}
 
-lastrun = datetime(2013, 4, 30, 0, 0)
+lastrun = datetime(2013, 5, 12, 0, 0)
 
 
 def load_config(cfg_name='~/.redrain/config'):
@@ -45,7 +45,7 @@ def load_config(cfg_name='~/.redrain/config'):
         make_config()
 
     # open and load the config file
-    f = open(path, 'r')
+    f = open(path, 'rU')
     for line in f.readlines():
         # match a comment
         m = match(r'#', line)
@@ -79,7 +79,7 @@ def load_config(cfg_name='~/.redrain/config'):
         f.close()
 
     # load up the lastrun file
-    f = open(config['f_lastrun'], 'r')
+    f = open(config['f_lastrun'], 'rU')
     d = list()
     for k in range(5):
         d.append(int(f.readline()))
@@ -143,7 +143,7 @@ def load_oldshows(filename):
     'guid=' and loads them into old_urls and old_guids respectively.  Each
     line is loaded as a key and the value in the dictionaries is set to 1.
     """
-    f = open(filename, 'r')
+    f = open(filename, 'rU')
 
     for line in f.readlines():
         # discard a comment
@@ -217,7 +217,7 @@ def load_podcasts():
     if os.path.exists(config['f_podcasts']) == False:
         return
 
-    f = open(config['f_podcasts'], 'r')
+    f = open(config['f_podcasts'], 'rU')
     show = dict()
     for line in f.readlines():
         # match a key=value line
