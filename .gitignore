@@ -4,3 +4,5 @@
 attic/*
 feedparser5.py
 testcache/*
+
+/feedparser.py
