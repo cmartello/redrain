@@ -6,10 +6,10 @@ import string
 import time
 import re
 import os
+import urllib
 from feedparser import parse
 from re import search, match
 from datetime import datetime
-from urllib import urlretrieve, urlopen
 
 # globals
 config = dict()     # basic config file, for bootstrapping everything else
@@ -25,8 +25,13 @@ default_config = { \
                     'd_download_dir': '~/.redrain/download/', \
                     'f_lastrun': '~/.redrain/lastrun'}
 
-lastrun = datetime(2013, 5, 12, 0, 0)
+lastrun = datetime(2013, 8, 18, 0, 0)
 
+# Small hack to make sure that redrain identifies itself by user-agent
+class RRopener(urllib.FancyURLopener):
+    version = "Redrain/0.4.3"
+
+urllib._urlopener = RRopener()
 
 def load_config(cfg_name='~/.redrain/config'):
     """Loads all needed config files for the program to run
@@ -178,7 +183,7 @@ def load_remote_oldshows(url):
     r_guids = set()
 
     # open the url
-    f = urlopen(url)
+    f = urllib.urlopen(url)
 
     # iterate over the url
     for line in f.readlines():
@@ -431,9 +436,9 @@ def download_episode(episode, custom=None):
 
     # download the file
     if 'dl_file_name' in episode:
-        urlretrieve(episode['url'], fixpath(config['d_download_dir'] + custom))
+        urllib.urlretrieve(episode['url'], fixpath(config['d_download_dir'] + custom))
     else:
-        urlretrieve(episode['url'], fixpath(config['d_download_dir'] + fname))
+        urllib.urlretrieve(episode['url'], fixpath(config['d_download_dir'] + fname))
 
     # mark episode as old
     mark_as_old(episode)
