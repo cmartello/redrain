@@ -2,7 +2,6 @@
 everything.
 """
 
-import string
 import time
 import re
 import os
@@ -12,26 +11,28 @@ from re import search, match
 from datetime import datetime
 
 # globals
-config = dict()     # basic config file, for bootstrapping everything else
-podcasts = list()   # podcast list
-old_urls = set()    # urls of old episodes
-old_guids = set()   # guids of old episodes
-new_urls = set()    # urls of episodes that need to be comitted to file
-new_guids = set()   # urls of episodes that need to be comitted to file
+CONFIG = dict()     # basic config file, for bootstrapping everything else
+PODCASTS = list()   # podcast list
+OLD_URLS = set()    # urls of old episodes
+OLD_GUIDS = set()   # guids of old episodes
+NEW_URLS = set()    # urls of episodes that need to be comitted to file
+NEW_GUIDS = set()   # urls of episodes that need to be comitted to file
 
-default_config = { \
+DEFAULT_CONFIG = { \
                     'f_oldshows': '~/.redrain/oldshows', \
                     'f_podcasts': '~/.redrain/podcasts', \
                     'd_download_dir': '~/.redrain/download/', \
                     'f_lastrun': '~/.redrain/lastrun'}
 
-lastrun = datetime(2013, 8, 18, 0, 0)
+LASTRUN = datetime(2013, 8, 24, 0, 0)
 
 # Small hack to make sure that redrain identifies itself by user-agent
 class RRopener(urllib.FancyURLopener):
+    """Hack -- improve later."""
     version = "Redrain/0.4.3"
 
 urllib._urlopener = RRopener()
+
 
 def load_config(cfg_name='~/.redrain/config'):
     """Loads all needed config files for the program to run
@@ -41,7 +42,7 @@ def load_config(cfg_name='~/.redrain/config'):
     Reads the base configuration file, then loads the oldshows and lastrun
     files.
     """
-    global lastrun
+    global LASTRUN
 
     path = fixpath(cfg_name)
 
@@ -50,56 +51,56 @@ def load_config(cfg_name='~/.redrain/config'):
         make_config()
 
     # open and load the config file
-    f = open(path, 'rU')
-    for line in f.readlines():
+    f_config = open(path, 'rU')
+    for line in f_config.readlines():
         # match a comment
-        m = match(r'#', line)
-        if m is not None:
+        rex = match(r'#', line)
+        if rex is not None:
             continue
 
-        m = match(r'(.+)=(.+)', line)
-        if m is not None:
-            config[m.group(1)] = m.group(2)
+        rex = match(r'(.+)=(.+)', line)
+        if rex is not None:
+            CONFIG[rex.group(1)] = rex.group(2)
 
     # straighten up paths in the config
-    for n in config.keys():
-        m = match(r'(f_)', n)
-        if m is not None:
-            config[n] = fixpath(config[n])
+    for path in CONFIG.keys():
+        rex = match(r'(f_)', path)
+        if rex is not None:
+            CONFIG[path] = fixpath(CONFIG[path])
 
     # check for the 'oldshows' file; if it's not there, create it.
-    if os.path.exists(config['f_oldshows']) == False:
+    if os.path.exists(CONFIG['f_oldshows']) == False:
         # create an empty file
-        open(config['f_oldshows'], 'w').close()
+        open(CONFIG['f_oldshows'], 'w').close()
 
-    load_oldshows(config['f_oldshows'])
+    load_oldshows(CONFIG['f_oldshows'])
 
     # check for the lastrun file and load or create it
-    if os.path.exists(config['f_lastrun']) == False:
-        f = open(config['f_lastrun'], 'w')
-        lastrun = datetime(2009, 11, 15, 0, 0)
+    if os.path.exists(CONFIG['f_lastrun']) == False:
+        f_last = open(CONFIG['f_lastrun'], 'w')
+        LASTRUN = datetime(2013, 8, 24, 0, 0)
         for k in range(5):
-            f.write(str(lastrun.timetuple()[k]) + '\n')
-        f.flush()
-        f.close()
+            f_last.write(str(LASTRUN.timetuple()[k]) + '\n')
+        f_last.flush()
+        f_last.close()
 
     # load up the lastrun file
-    f = open(config['f_lastrun'], 'rU')
-    d = list()
+    f_last = open(CONFIG['f_lastrun'], 'rU')
+    dnt = list()
     for k in range(5):
-        d.append(int(f.readline()))
+        dnt.append(int(f_last.readline()))
 
-    lastrun = datetime(d[0], d[1], d[2], d[3], d[4])
+    LASTRUN = datetime(dnt[0], dnt[1], dnt[2], dnt[3], dnt[4])
 
     # make sure that any directories in the configuration actually exist.
     # if they don't exist, create them.
-    for n in config.keys():
-        m = match(r'd_', n)
-        if m is not None:
-            p = fixpath(config[n])
-            if os.path.exists(p) == False:
-                print p + " not found, creating path."
-                os.makedirs(p)
+    for directory in CONFIG.keys():
+        rex = match(r'd_', directory)
+        if rex is not None:
+            path = fixpath(CONFIG[directory])
+            if os.path.exists(path) == False:
+                print path + " not found, creating path."
+                os.makedirs(path)
 
 
 def make_config():
@@ -117,26 +118,26 @@ def make_config():
         os.mkdir(fixpath('~/.redrain/'))
 
     # create the default download dir if it's not there
-    if os.path.exists(default_config['d_download_dir']) == False:
-        os.mkdir(fixpath(default_config['d_download_dir']) + '/')
+    if os.path.exists(DEFAULT_CONFIG['d_download_dir']) == False:
+        os.mkdir(fixpath(DEFAULT_CONFIG['d_download_dir']) + '/')
 
     # create the core config file and write defaults to it
-    f = open(fixpath('~/.redrain/config'), 'w')
-    for k in default_config.keys():
-        f.write(k + '=' + default_config[k] + '\n')
+    f_config = open(fixpath('~/.redrain/config'), 'w')
+    for k in DEFAULT_CONFIG.keys():
+        f_config.write(k + '=' + DEFAULT_CONFIG[k] + '\n')
 
-    f.flush()
-    f.close()
+    f_config.flush()
+    f_config.close()
 
 
-def fixpath(u):
+def fixpath(user):
     """Normalizes a given path to a file or directory.
 
     Arguments - A string that should point to a file or directory.
 
     This is really just a simple wrapper around a couple functions in os.path
     """
-    return os.path.normpath(os.path.expanduser(u))
+    return os.path.normpath(os.path.expanduser(user))
 
 
 def load_oldshows(filename):
@@ -145,67 +146,23 @@ def load_oldshows(filename):
     Arguments -- a filename.
 
     Scans the oldshows files for lines that start with either 'url=' or
-    'guid=' and loads them into old_urls and old_guids respectively.  Each
+    'guid=' and loads them into OLD_URLS and OLD_GUIDS respectively.  Each
     line is loaded as a key and the value in the dictionaries is set to 1.
     """
-    f = open(filename, 'rU')
+    f_old = open(filename, 'rU')
 
-    for line in f.readlines():
+    for line in f_old.readlines():
         # discard a comment
-        m = match(r'#', line)
-        if m is not None:
+        rex = match(r'#', line)
+        if rex is not None:
             continue
 
-        m = match(r'(guid|url)=(.+)', line)
-        if m is not None:
-            if m.group(1) == 'url':
-                old_urls.add(m.group(2))
-            if m.group(1) == 'guid':
-                old_guids.add(m.group(2))
-
-
-def load_remote_oldshows(url):
-    """Grabs an oldshows file from a remote location and adds it locally.
-
-    Arguments -- a url that points to an oldshows file on the web.
-
-    Downloads a remote oldshows file and scans it just like a standard file.
-    Items new to the local state are added to *both* old_* (because the files
-    shouldn't be downloaded) and new_* (so that they're marked as old for the
-    next run.)
-    """
-    # global data
-    global old_guids, old_urls
-    global new_guids, new_urls
-
-    # fresh sets for the data pulled from the remote file
-    r_urls = set()
-    r_guids = set()
-
-    # open the url
-    f = urllib.urlopen(url)
-
-    # iterate over the url
-    for line in f.readlines():
-        # discard comments
-        m = match(r'#', line)
-        if m is not None:
-            continue
-
-        m = match(r'(guid|url)=(.+)', line)
-        if m is not None:
-            if m.group(1) == 'url':
-                r_urls.add(m.group(2))
-            if m.group(1) == 'guid':
-                r_guids.add(m.group(2))
-
-    # determine which entries are new and put them in the new_* sets
-    new_urls = new_urls | (r_urls - old_urls)
-    new_guids = new_guids | (r_guids - old_guids)
-
-    # add the remote urls to the old_* sets
-    old_urls = old_urls | r_urls
-    old_guids = old_guids | r_guids
+        rex = match(r'(guid|url)=(.+)', line)
+        if rex is not None:
+            if rex.group(1) == 'url':
+                OLD_URLS.add(rex.group(2))
+            if rex.group(1) == 'guid':
+                OLD_GUIDS.add(rex.group(2))
 
 
 def load_podcasts():
@@ -213,32 +170,32 @@ def load_podcasts():
 
     Arguments -- none.
 
-    Scans the file in config['f_podcasts'] for entries.  Each entry is a
+    Scans the file in CONFIG['f_podcasts'] for entries.  Each entry is a
     series of key=value pairs, and each entry is seperated by a percent
     sign ('%').  At an absolute minimum, an entry needs to contain a feedurl
     key.  At present, the only other keys supported are 'skip' and 'nicename'.
     """
 
-    if os.path.exists(config['f_podcasts']) == False:
+    if os.path.exists(CONFIG['f_podcasts']) == False:
         return
 
-    f = open(config['f_podcasts'], 'rU')
+    f_pods = open(CONFIG['f_podcasts'], 'rU')
     show = dict()
-    for line in f.readlines():
+    for line in f_pods.readlines():
         # match a key=value line
-        m = match(r'(.+?)=(.+)', line)
-        if m is not None:
-            show[m.group(1)] = m.group(2)
+        rex = match(r'(.+?)=(.+)', line)
+        if rex is not None:
+            show[rex.group(1)] = rex.group(2)
             continue
 
         # match a comment
-        m = match(r'#', line)
-        if m is not None:
+        rex = match(r'#', line)
+        if rex is not None:
             continue
 
         # match a % and start the next show
-        m = match(r'%', line)
-        if m is not None:
+        rex = match(r'%', line)
+        if rex is not None:
             # skip the show if the entry contains "skip=true"
             if show.get('skip', 'false') == 'true':
                 show = dict()
@@ -246,7 +203,7 @@ def load_podcasts():
 
             # if there is a feedurl, we can use it.  append it.
             if 'feedurl' in show:
-                podcasts.append(show)
+                PODCASTS.append(show)
 
             # if there isn't, warn the user
             elif not 'feedurl' in show:
@@ -268,24 +225,24 @@ def scrape_feed_url(url, nicename='NoneProvided'):
     'url', 'title', 'guid', 'date', 'showname', and 'nicename'.
     """
     showlist = []
-    f = parse(url)
+    fp_data = parse(url)
 
     # This warning is badly placed; shouldn't print to console in redrain.py
-    if f.bozo == 1:
+    if fp_data.bozo == 1:
         print '[error]',
 
     # iterate over the entries within the feed
-    for entry in f.entries:
+    for entry in fp_data.entries:
         tmp = dict()
         tmp['title'] = entry.title
         tmp['guid'] = entry.guid
-        tmp['showname'] = f.feed.title
+        tmp['showname'] = fp_data.feed.title
         tmp['nicename'] = nicename
 
         # prep updated_parsed for conversion datetime object
-        d = list(entry.published_parsed[0:5])
+        dnt = list(entry.published_parsed[0:5])
 
-        tmp['date'] = datetime(d[0], d[1], d[2], d[3], d[4])
+        tmp['date'] = datetime(dnt[0], dnt[1], dnt[2], dnt[3], dnt[4])
 
         # within each entry is a list of enclosures (hopefully of length 1)
         for enclosure in entry.enclosures:
@@ -297,12 +254,14 @@ def scrape_feed_url(url, nicename='NoneProvided'):
 
     return showlist
 
+
 def valid_item(item):
     """Debug function: test to see if an item is up to spec."""
-    for x in ['title', 'guid', 'showname', 'nicename', 'date', 'url']:
-        if item.get(x, 'FAIL') == 'FAIL':
+    for key in ['title', 'guid', 'showname', 'nicename', 'date', 'url']:
+        if item.get(key, 'FAIL') == 'FAIL':
             return False
     return True
+
 
 def filter_list(item):
     """Determines if a given episode is new enough to be downloaded.
@@ -317,15 +276,15 @@ def filter_list(item):
     count = 0
 
     # check guids
-    if item['guid'] in old_guids:
+    if item['guid'] in OLD_GUIDS:
         count = count + 1
 
     # check urls
-    if item['url'] in old_urls:
+    if item['url'] in OLD_URLS:
         count = count + 1
 
     # compare date
-    if (lastrun - item['date']).days >= 0:
+    if (LASTRUN - item['date']).days >= 0:
         count = count + 1
 
     if count > 1:
@@ -339,53 +298,38 @@ def save_state():
 
     Arguments -- None.
 
-    Appends the keys in new_urls and new_guids to the oldshows file, with each
+    Appends the keys in NEW_URLS and NEW_GUIDS to the oldshows file, with each
     key prepended by guid= and url=.  Also updates the lastrun file with the
     current time.
     """
-    global new_urls
-    global new_guids
+    global NEW_URLS
+    global NEW_GUIDS
 
     # open up 'oldshows'
-    f = open(config['f_oldshows'], 'a')
+    f_old = open(CONFIG['f_oldshows'], 'a')
 
     # save the urls
-    for n in new_urls:
-        f.write('url=' + n + '\n')
+    for url in NEW_URLS:
+        f_old.write('url=' + url + '\n')
 
     # save the guids
-    for n in new_guids:
-        f.write('guid=' + n + '\n')
+    for url in NEW_GUIDS:
+        f_old.write('guid=' + url + '\n')
 
     # clean up
-    f.flush()
-    f.close()
+    f_old.flush()
+    f_old.close()
 
     # save datetime
-    f = open(config['f_lastrun'], 'w')
+    f_last = open(CONFIG['f_lastrun'], 'w')
     for k in time.gmtime()[0:5]:
-        f.write(str(k) + '\n')
+        f_last.write(str(k) + '\n')
 
-    f.flush()
-    f.close()
+    f_last.flush()
+    f_last.close()
 
-    new_urls = set()
-    new_guids = set()
-
-
-def is_ascii(n):
-    """Checks to make sure that a given character is ASCII
-
-    Arguments -- one byte.
-
-    Returns True if the ordinal value of n is >= 32 and <= 128, False
-    otherwise.  Used as a helper function to sanitize_filename.
-    """
-    k = ord(n)
-    if k < 32 or k > 128:
-        return False
-
-    return True
+    NEW_URLS = set()
+    NEW_GUIDS = set()
 
 
 def sanitize_filename(fname):
@@ -400,13 +344,16 @@ def sanitize_filename(fname):
     """
     # if fname is unicode, strip it first
     if type(fname) == unicode:
-        fname = ''.join([x for x in fname if is_ascii(x) == True])
+        fname = ''.join([x for x in fname if ord(x) > 31 and ord(x) < 129])
 
     # turn into a string, reduce to 250 characters
     fname = str(fname)[0:250]
 
     # clean 'naughty' characters
-    fname = string.translate(fname, None, ':;*?"|\/<>')
+    naughty = ':;*?"|\/<>'
+    trans = dict(zip([x for x in naughty], ['' for x in xrange(len(naughty))]))
+    for key, value in trans.iteritems():
+        fname = fname.replace(key, value)
 
     return fname
 
@@ -420,7 +367,6 @@ def download_episode(episode, custom=None):
     Simply downloads a specified episode to the configured download directory.
     Makes a call to sanitize_filename to make the file safe to save anywhere.
     """
-    global config
 
     # construct filename
     # - get extension from url
@@ -430,15 +376,17 @@ def download_episode(episode, custom=None):
     fname = sanitize_filename(episode['title']) + ext
 
     # skip downloading and bail if the user asked for it
-    if config.get('skipdl', 'false') == 'true':
+    if CONFIG.get('skipdl', 'false') == 'true':
         mark_as_old(episode)
         return
 
     # download the file
     if 'dl_file_name' in episode:
-        urllib.urlretrieve(episode['url'], fixpath(config['d_download_dir'] + custom))
+        urllib.urlretrieve(episode['url'], \
+            fixpath(CONFIG['d_download_dir'] + custom))
     else:
-        urllib.urlretrieve(episode['url'], fixpath(config['d_download_dir'] + fname))
+        urllib.urlretrieve(episode['url'], \
+            fixpath(CONFIG['d_download_dir'] + fname))
 
     # mark episode as old
     mark_as_old(episode)
@@ -456,11 +404,11 @@ def mark_as_old(episode):
     file later.
     """
 
-    old_urls.add(episode['url'])
-    old_guids.add(episode['guid'])
+    OLD_URLS.add(episode['url'])
+    OLD_GUIDS.add(episode['guid'])
 
-    new_urls.add(episode['url'])
-    new_guids.add(episode['guid'])
+    NEW_URLS.add(episode['url'])
+    NEW_GUIDS.add(episode['guid'])
 
 
 def custom_name(podcast, fstring):
@@ -495,12 +443,12 @@ def custom_name(podcast, fstring):
 
     # construct the regular expression from the keys of 'replacements'
     allkeys = '%{('
-    for n in replacements.keys():
-        allkeys = allkeys + n + '|'
+    for key in replacements.keys():
+        allkeys = allkeys + key + '|'
     allkeys = allkeys[:-1] + ')}'
 
     # replace the user-specified tokens
-    for x in xrange(fstring.count('%')):
+    for _ in xrange(fstring.count('%')):
         result = search(allkeys, fstring)
         if result is not None:
             fstring = re.sub('%{' + result.group(1) + '}', \
@@ -514,3 +462,4 @@ def custom_name(podcast, fstring):
 
     # we're done, return the string
     return fstring
+
