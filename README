@@ -1,6 +1,6 @@
-Redrain 0.4.3
+Redrain 0.4.4
 http://github.com/cmartello/redrain
-2013-AUG-18
+2013-AUG-24
 Copyright (c) 2009-2013 Chris Martello
 
 Redrain is a fairly simple console-based podcast downloader written in
@@ -73,12 +73,7 @@ FILES
 	are actually going into the chosen directory; this task is not fully
 	complete yet.
 
-	- r_oldshows -- A url where a remote copy of the 'oldshows' file can be
-	found.  Very useful if you only occasionally use a laptop to download your
-	podcasts, since the oldshows file on your laptop will be out of date by
-	comparison.  Note that this feature is only a stopgap solution; you can't
-	push oldshows up, so your home machine will be out of date.  A future
-	version of this feature will be even better.
+	- r_oldshows -- Function removed.
 
 	~/.redrain/podcasts - Flat text file, formatted similarly to 'config'.
 	Stores a list of key/value pairs the describe given podcasts.  

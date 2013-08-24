@@ -29,7 +29,7 @@ LASTRUN = datetime(2013, 8, 24, 0, 0)
 # Small hack to make sure that redrain identifies itself by user-agent
 class RRopener(urllib.FancyURLopener):
     """Hack -- improve later."""
-    version = "Redrain/0.4.3"
+    version = "Redrain/0.4.4"
 
 urllib._urlopener = RRopener()
 
