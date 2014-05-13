@@ -10,6 +10,8 @@ from feedparser import parse
 from re import search, match
 from datetime import datetime
 
+import sys
+
 # globals
 CONFIG = dict()     # basic config file, for bootstrapping everything else
 PODCASTS = list()   # podcast list
@@ -29,7 +31,7 @@ LASTRUN = datetime(2013, 8, 24, 0, 0)
 # Small hack to make sure that redrain identifies itself by user-agent
 class RRopener(urllib.FancyURLopener):
     """Hack -- improve later."""
-    version = "Redrain/0.4.4"
+    version = "rrlib/0.4.5"
 
 urllib._urlopener = RRopener()
 
@@ -358,6 +360,14 @@ def sanitize_filename(fname):
     return fname
 
 
+def dl_progress(count, blockSize, totalSize):
+    """Support function for download_episode."""
+
+    percent = int(count*blockSize*100/totalSize)
+    sys.stdout.write("\r%d%%" % percent)
+    sys.stdout.flush()
+
+
 def download_episode(episode, custom=None):
     """Downloads a podcast episode to the download directory.
 
@@ -383,13 +393,16 @@ def download_episode(episode, custom=None):
     # download the file
     if 'dl_file_name' in episode:
         urllib.urlretrieve(episode['url'], \
-            fixpath(CONFIG['d_download_dir'] + custom))
+            fixpath(CONFIG['d_download_dir'] + custom), dl_progress)
     else:
         urllib.urlretrieve(episode['url'], \
-            fixpath(CONFIG['d_download_dir'] + fname))
+            fixpath(CONFIG['d_download_dir'] + fname), dl_progress)
 
     # mark episode as old
     mark_as_old(episode)
+
+    # save the state so we don't redownload a show if the program is terminated early.
+    save_state()
 
 
 def mark_as_old(episode):

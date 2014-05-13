@@ -190,6 +190,7 @@ if __name__ == '__main__':
         else:
             print 'downloading: ' + n['title'] + ' ...'
             redrain.download_episode(n)
+        print '\n'
     print '---------------------------------------------------------------'
 
     # tell the user where everything has been downloaded to
